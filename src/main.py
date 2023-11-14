@@ -6,22 +6,10 @@ import requests_cache
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-from constants import BASE_DIR, MAIN_DOC_URL, PEP_DOC_URL
+from constants import BASE_DIR, MAIN_DOC_URL, PEP_DOC_URL, EXPECTED_STATUS
 from configs import configure_argument_parser, configure_logging
 from outputs import control_output
 from utils import get_response, find_tag
-
-
-EXPECTED_STATUS = {
-    'A': ('Active', 'Accepted'),
-    'D': ('Deferred',),
-    'F': ('Final',),
-    'P': ('Provisional',),
-    'R': ('Rejected',),
-    'S': ('Superseded',),
-    'W': ('Withdrawn',),
-    '': ('Draft', 'Active'),
-}
 
 
 def whats_new(session):
@@ -109,7 +97,9 @@ def download(session):
 
 def pep(session):
     response = get_response(session, PEP_DOC_URL)
-    results = []
+    results = [('Статус', 'Количество')]
+    pep_statuses = {}
+    total_pep = 0
     if response is None:
         return
     soup = BeautifulSoup(response.text, features='lxml')
@@ -117,19 +107,36 @@ def pep(session):
     main_tag_body = find_tag(main_tag, 'tbody')
     every_pep_link_tag = main_tag_body.find_all('tr')
     for pep in tqdm(every_pep_link_tag):
+        total_pep += 1
         pep_table_status_tag = find_tag(pep, 'abbr')
         pep_table_status = pep_table_status_tag.text[1:]
+        expected_status =  EXPECTED_STATUS[pep_table_status]
 
         link_tag = find_tag(pep, 'a')
         pep_link = urljoin(PEP_DOC_URL, link_tag['href'])
+        response = get_response(session, pep_link)
+        soup = BeautifulSoup(response.text, features='lxml')
+        pep_status_tag = find_tag(soup, 'dl', attrs={'class': 'rfc2822 field-list simple'})
+        pep_status = pep_status_tag.find(string='Status').parent.find_next_sibling('dd').string
+        if pep_status in pep_statuses:
+            pep_statuses[pep_status] += 1
+        else:
+            pep_statuses[pep_status] = 1
 
-        results.append(pep_link)
-        
-    
+        if pep_status not in expected_status:
+            logging.warning
+            (
+                f'Несовпадающие статусы:'
+                f'{pep_link}'
+                f'Статус в карточке: {pep_status}'
+                f'Ожидаемые статусы: {expected_status}'
+            )
+    for status in pep_statuses.items():
+        results.append((status[0], status[1]))
+    results.append(('Общее количество', total_pep))
     return results
-    
 
-    return results
+
 MODE_TO_FUNCTION = {
     'whats-new': whats_new,
     'latest-versions': latest_versions,
