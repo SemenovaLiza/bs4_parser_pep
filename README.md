@@ -174,4 +174,6 @@ python src/main.py latest-versions -c -o pretty
 Semenova Elizaveta
 
 ~ [Other projects](https://github.com/SemenovaLiza) ~
+
+
 [![Typing SVG](https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=657&size=24&pause=1000&color=98D0F7FF&random=false&width=435&lines=⋆⋅☆⋅⋆☆⋆⋅☆⋅⋆)](https://git.io/typing-svg)
