@@ -125,7 +125,14 @@ def pep(session):
         total_pep += 1
         pep_table_status_tag = find_tag(pep, 'abbr')
         pep_table_status = pep_table_status_tag.text[1:]
-        expected_status = EXPECTED_STATUS[pep_table_status]
+
+        try:
+            expected_status = EXPECTED_STATUS[pep_table_status]
+        except KeyError:
+            logging.error
+            (
+                f'Статус {pep_table_status} не найден'
+            )
 
         link_tag = find_tag(pep, 'a')
         pep_link = urljoin(PEP_DOC_URL, link_tag['href'])
@@ -139,10 +146,7 @@ def pep(session):
             string='Status'
         ).parent.find_next_sibling('dd').string
 
-        if pep_status in pep_statuses:
-            pep_statuses[pep_status] += 1
-        else:
-            pep_statuses[pep_status] = 1
+        pep_statuses[pep_status] = pep_statuses.get(pep_status, 0) + 1
 
         if pep_status not in expected_status:
             logging.warning
@@ -153,8 +157,7 @@ def pep(session):
                 f'Ожидаемые статусы: {expected_status}'
             )
 
-    for status in pep_statuses.items():
-        results.append((status[0], status[1]))
+    results.extend((pep_statuses.items()))
     results.append(('Общее количество', total_pep))
 
     return results

@@ -8,6 +8,9 @@ LOG_DIR = BASE_DIR / 'logs'
 LOG_FILE = LOG_DIR / 'parser.log'
 DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'
 
+MAX_BYTES = 10 ** 6
+BACKUPCOUNT = 5
+
 EXPECTED_STATUS = {
     'A': ('Active', 'Accepted'),
     'D': ('Deferred',),
